@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CMA Prep</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1a1d23;--mu:#6b7280;--ac:#2563eb;--ok:#16a34a;--bad:#dc2626;--bd:#e5e7eb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--card:#1a1d23;--tx:#eceef2;--mu:#9aa1ad;--ac:#60a5fa;--ok:#4ade80;--bad:#f87171;--bd:#2a2e37;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111317;--card:#1a1d23;--tx:#eceef2;--mu:#9aa1ad;--ac:#60a5fa;--ok:#4ade80;--bad:#f87171;--bd:#2a2e37;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;max-width:640px;margin:0 auto;padding:12px 12px 80px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:10px 0}
+h2{font-size:16px;margin:0 0 8px}.mu{color:var(--mu);font-size:13px}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+button,select,input,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px}
+textarea{width:100%;min-height:70px}input[type=text],input[type=number],input[type=date],select{width:100%}
+button{cursor:pointer}.pri{background:var(--ac);color:#fff;border:0}
+.seg{display:flex;gap:6px;margin-bottom:8px}.seg button{flex:1}
+.on{background:var(--ac)!important;color:#fff!important;border-color:var(--ac)!important}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs button{flex:1;border:0;border-radius:0;padding:14px 4px;background:transparent}
+.bar{height:8px;background:var(--bd);border-radius:4px;overflow:hidden;margin:4px 0}.bar i{display:block;height:100%;background:var(--ok)}
+.big{font-size:34px;font-weight:700}.bad{color:var(--bad)}.ok{color:var(--ok)}
+.it{padding:8px 0;border-top:1px solid var(--bd)}.x{border:0;background:none;color:var(--mu);padding:4px 8px}
+.rb{padding:4px 10px}details summary{cursor:pointer}
+</style>
+</head>
+<body>
+<div class="seg"><button class="lv" data-l="inter" onclick="setL('inter')">CMA Inter</button><button class="lv" data-l="final" onclick="setL('final')">CMA Final</button></div>
+<div id="main"></div>
+<div class="tabs"><button class="tb" data-t="home" onclick="setT('home')">Home</button><button class="tb" data-t="lec" onclick="setT('lec')">Lectures</button><button class="tb" data-t="rev" onclick="setT('rev')">Revise</button><button class="tb" data-t="tst" onclick="setT('tst')">Tests</button></div>
+<script>
+var K='cmaPrep1',S=null,tab='home',si=0;
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!S){S={level:'inter',dates:{inter:'2026-12-11',final:''},data:{inter:{subjects:['Management Accounting','Corporate Accounting and Auditing','Operation Management & Strategic Management','Financial Management & Business Data Analytics'].map(function(n){return{name:n,chapters:[],lectures:[]}}),tests:[]},final:{subjects:[],tests:[]}}}}
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function L(){return S.data[S.level]}
+function sub(){var s=L().subjects;return s[Math.min(si,s.length-1)]}
+function days(){var d=S.dates[S.level];if(!d)return null;return Math.ceil((new Date(d+'T00:00:00')-new Date().setHours(0,0,0,0))/864e5)}
+function setL(l){S.level=l;si=0;save();render()}
+function setT(t){tab=t;render()}
+function bar(p){return '<div class="bar"><i style="width:'+Math.round(p)+'%"></i></div>'}
+function lecStats(s){var t=0,d=0;s.lectures.forEach(function(x){t+=x.h;if(x.d)d+=x.h});return{t:t,d:d,p:t?d/t*100:0}}
+function plan(s){var tg=s.target||S.dates[S.level],dd=null;if(tg)dd=Math.ceil((new Date(tg+'T00:00:00')-new Date().setHours(0,0,0,0))/864e5);var n=s.lectures.length,done=s.lectures.filter(function(x){return x.d}).length,pend=n-done,a=lecStats(s),rem=a.t-a.d;return{n:n,done:done,pend:pend,dd:dd,pd:(dd>0&&pend)?pend/dd:0,hd:(dd>0&&rem>0)?rem/dd:0}}
+function revP(s){var n=s.chapters.length;if(!n)return 0;var c=0;s.chapters.forEach(function(x){x.r.forEach(function(v){c+=v})});return c/(3*n)*100}
+function picker(){var s=L().subjects;if(!s.length)return '<div class="card mu">Add a subject on the Home tab first.</div>';
+return '<select onchange="si=this.selectedIndex;render()">'+s.map(function(x,i){return '<option'+(i===Math.min(si,s.length-1)?' selected':'')+'>'+esc(x.name)+'</option>'}).join('')+'</select>'}
+function render(){
+document.querySelectorAll('.lv').forEach(function(b){b.classList.toggle('on',b.dataset.l===S.level)});
+document.querySelectorAll('.tb').forEach(function(b){b.classList.toggle('on',b.dataset.t===tab)});
+document.getElementById('main').innerHTML={home:home,lec:lec,rev:rev,tst:tst}[tab]()}
+function home(){var d=days(),h='<div class="card"><div class="mu">Exam date ('+(S.level==='inter'?'Inter':'Final')+')</div><input type="date" value="'+(S.dates[S.level]||'')+'" onchange="S.dates[S.level]=this.value;save();render()">';
+h+=d===null?'<p class="mu">Set your exam date to start the countdown.</p>':'<div class="big '+(d<=14?'bad':'')+'">'+(d>0?d+' days left':d===0?'Exam day':'Exam date passed')+'</div>';
+h+='</div>';
+L().subjects.forEach(function(s,i){var a=lecStats(s),p=plan(s),per=p.pd?p.pd.toFixed(1)+' lectures/day':'';
+h+='<div class="card"><div class="row"><h2>'+esc(s.name)+'</h2><button class="x" onclick="delSub('+i+')">×</button></div>'+
+'<div class="mu">Lectures: '+p.done+' watched · '+p.pend+' pending'+(per?' · '+per+' needed':'')+'</div>'+bar(a.p)+
+'<div class="mu">Revision: '+Math.round(revP(s))+'% · '+s.chapters.length+' chapters</div>'+bar(revP(s))+'</div>'});
+var w=weak();if(w.length)h+='<div class="card"><h2>Weak chapters (below 50%)</h2>'+w.map(function(x){return '<div class="it">'+esc(x.s)+' — '+esc(x.c)+' <b class="bad">'+x.p+'%</b></div>'}).join('')+'</div>';
+h+='<div class="card"><h2>Add subject</h2><input type="text" id="ns" placeholder="Subject name"><p><button class="pri" onclick="addSub()">Add subject</button></p></div>';
+return h}
+function addSub(){var v=document.getElementById('ns').value.trim();if(!v)return;L().subjects.push({name:v,chapters:[],lectures:[]});save();render()}
+function delSub(i){if(confirm('Remove this subject and its data?')){L().subjects.splice(i,1);save();render()}}
+function lec(){var h=picker(),s=sub();if(!s)return h;var a=lecStats(s);
+var pl=plan(s);h+='<div class="card"><div class="row"><div class="big ok">'+pl.done+'<span class="mu"> watched</span></div><div class="big bad">'+pl.pend+'<span class="mu"> pending</span></div></div><div class="mu">'+pl.n+' lectures · '+a.d.toFixed(1)+' / '+a.t.toFixed(1)+' hours done</div>'+bar(a.p)+'<div class="mu" style="margin-top:8px">Finish all lectures by (blank = exam date)</div><input type="date" value="'+(s.target||'')+'" onchange="sub().target=this.value;save();render()">'+(pl.dd===null?'<p class="mu">Set a target date.</p>':pl.pend===0?'<p class="ok">All lectures done!</p>':pl.dd<=0?'<p class="bad">Target date has passed.</p>':'<p><b>'+pl.pd.toFixed(1)+' lectures/day</b> (about '+pl.hd.toFixed(1)+' h/day) for '+pl.dd+' days</p>')+'</div><div class="card">';
+if(!s.lectures.length)h+='<p class="mu">No lectures yet. Paste them below.</p>';
+s.lectures.forEach(function(x,i){h+='<div class="it row"><label style="flex:1"><input type="checkbox" '+(x.d?'checked':'')+' onchange="tog('+i+')"> '+esc(x.t)+' <span class="mu">('+x.h+' h)</span></label><button class="x" onclick="delLec('+i+')">×</button></div>'});
+h+='</div><div class="card"><h2>Add lectures</h2><div class="mu">One per line: title, hours (e.g. Lecture 3 – Budgeting, 1.5)</div><textarea id="bl"></textarea><p><button class="pri" onclick="addLec()">Add</button></p></div>';return h}
+function tog(i){var l=sub().lectures[i];l.d=!l.d;save();render()}
+function delLec(i){sub().lectures.splice(i,1);save();render()}
+function addLec(){var v=document.getElementById('bl').value.split('\n');v.forEach(function(r){r=r.trim();if(!r)return;var m=r.match(/^(.*?)[,|]\s*([\d.]+)\s*$/),t=m?m[1]:r,hr=m?parseFloat(m[2]):1;sub().lectures.push({t:t,h:hr||1,d:false})});save();render()}
+function rev(){var h=picker(),s=sub();if(!s)return h;
+h+='<div class="card">';if(!s.chapters.length)h+='<p class="mu">No chapters yet. Paste them below.</p>';
+s.chapters.forEach(function(c,i){h+='<div class="it"><div class="row"><b>'+esc(c.n)+'</b><button class="x" onclick="delCh('+i+')">×</button></div><div class="row" style="justify-content:flex-start">'+
+[0,1,2].map(function(k){return '<button class="rb '+(c.r[k]?'on':'')+'" onclick="rv('+i+','+k+')">R'+(k+1)+'</button>'}).join('')+'</div>'+
+'<details><summary class="mu">Attack-mode notes</summary><textarea onchange="note('+i+',this.value)" placeholder="Formulas, key points, traps…">'+esc(c.note||'')+'</textarea></details></div>'});
+h+='</div><div class="card"><h2>Add chapters</h2><div class="mu">One chapter per line</div><textarea id="bc"></textarea><p><button class="pri" onclick="addCh()">Add</button></p></div>';return h}
+function rv(i,k){var r=sub().chapters[i].r;r[k]=r[k]?0:1;save();render()}
+function note(i,v){sub().chapters[i].note=v;save()}
+function delCh(i){sub().chapters.splice(i,1);save();render()}
+function addCh(){document.getElementById('bc').value.split('\n').forEach(function(r){r=r.trim();if(r)sub().chapters.push({n:r,r:[0,0,0],note:''})});save();render()}
+function tst(){var h=picker(),s=sub();if(!s)return h;
+h+='<div class="card"><h2>Log a test</h2><select id="tc"><option value="">Full paper (mock)</option>'+s.chapters.map(function(c){return '<option>'+esc(c.n)+'</option>'}).join('')+'</select><div class="row" style="margin-top:8px"><input type="number" id="tsc" placeholder="Score"><input type="number" id="tmx" placeholder="Out of" value="100"></div><p><button class="pri" onclick="addT()">Save result</button></p></div>';
+var ts=L().tests.map(function(t,i){t.i=i;return t}).filter(function(t){return t.s===s.name}).reverse();
+h+='<div class="card"><h2>History</h2>';if(!ts.length)h+='<p class="mu">No tests logged yet.</p>';
+ts.forEach(function(t){var p=Math.round(t.sc/t.mx*100);h+='<div class="it row"><span>'+esc(t.c||'Full mock')+'<br><span class="mu">'+t.d+'</span></span><b class="'+(p<50?'bad':'ok')+'">'+t.sc+'/'+t.mx+' ('+p+'%)</b><button class="x" onclick="delT('+t.i+')">×</button></div>'});
+return h+'</div>'}
+function addT(){var sc=parseFloat(document.getElementById('tsc').value),mx=parseFloat(document.getElementById('tmx').value);if(isNaN(sc)||!mx)return;
+L().tests.push({s:sub().name,c:document.getElementById('tc').value,sc:sc,mx:mx,d:new Date().toISOString().slice(0,10)});save();render()}
+function delT(i){L().tests.splice(i,1);save();render()}
+function weak(){var m={};L().tests.forEach(function(t){if(!t.c)return;var k=t.s+'||'+t.c;(m[k]=m[k]||[]).push(t.sc/t.mx*100)});
+return Object.keys(m).map(function(k){var a=m[k],p=Math.round(a.reduce(function(x,y){return x+y},0)/a.length);return{s:k.split('||')[0],c:k.split('||')[1],p:p}}).filter(function(x){return x.p<50}).sort(function(a,b){return a.p-b.p})}
+render();
+</script>
+</body>
+</html>
