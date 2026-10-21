@@ -1,0 +1,16 @@
+{
+  "name": "cma-prep-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CMA Prep Android app built from the existing HTML app",
+  "scripts": {
+    "build": "echo Static HTML app ready"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  }
+}
